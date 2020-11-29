@@ -74,6 +74,13 @@ const FoodDetails: React.FC = () => {
   useEffect(() => {
     async function loadFood(): Promise<void> {
       // Load a specific food with extras based on routeParams id
+      const {id} = routeParams
+      api.get(`/foods/${id}`).then(response=>{
+        setFood(response.data)
+        const extras = response.data.extras as Extra[]
+        extras.map(extra=> extra.quantity = 0)
+        setExtras(extras)
+      })
     }
 
     loadFood();
@@ -81,30 +88,69 @@ const FoodDetails: React.FC = () => {
 
   function handleIncrementExtra(id: number): void {
     // Increment extra quantity
+    const updatedExtras = extras.map(extra=> {
+      if(extra.id === id){
+        extra.quantity += 1
+      }
+      return extra
+    })
+
+    setExtras(updatedExtras)
+
   }
 
   function handleDecrementExtra(id: number): void {
     // Decrement extra quantity
+    const updatedExtras = extras.map(extra=> {
+      if(extra.id === id && extra.quantity > 0){
+        extra.quantity -=1
+      }
+      return extra
+    })
+
+    setExtras(updatedExtras)
   }
 
   function handleIncrementFood(): void {
     // Increment food quantity
+    setFoodQuantity(state=>state+1)
   }
 
   function handleDecrementFood(): void {
-    // Decrement food quantity
+    // Decrement food quantity)
+    setFoodQuantity(state=> state > 1 ?  state-1 : 1)
   }
 
   const toggleFavorite = useCallback(() => {
     // Toggle if food is favorite or not
+    setIsFavorite(state=>!state)
   }, [isFavorite, food]);
 
   const cartTotal = useMemo(() => {
     // Calculate cartTotal
+    const totalExtras = extras.reduce((acc, cur)=> (cur.value * cur.quantity) + acc, 0)
+
+    const total = (food.price * foodQuantity) + totalExtras
+
+    return formatValue(total)
   }, [extras, food, foodQuantity]);
 
   async function handleFinishOrder(): Promise<void> {
     // Finish the order and save on the API
+    api.post('orders',{
+
+    product_id: food.id,
+    name: food.name,
+    description: food.description,
+    thumbnail_url: food.image_url
+
+    })
+    navigation.reset({
+      routes: [{
+        name: 'Home',
+      }],
+      index: 0,
+    });
   }
 
   // Calculate the correct icon name
